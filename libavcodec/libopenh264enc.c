@@ -47,6 +47,7 @@ typedef struct SVCContext {
     int skip_frames;
     int skipped;
     int cabac;
+    int variable_bitrate;
 } SVCContext;
 
 #define OFFSET(x) offsetof(SVCContext, x)
@@ -71,6 +72,7 @@ static const AVOption options[] = {
     { "max_nal_size", "set maximum NAL size in bytes", OFFSET(max_nal_size), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, INT_MAX, VE },
     { "allow_skip_frames", "allow skipping frames to hit the target bitrate", OFFSET(skip_frames), AV_OPT_TYPE_BOOL, { .i64 = 0 }, 0, 1, VE },
     { "cabac", "Enable cabac", OFFSET(cabac), AV_OPT_TYPE_INT, { .i64 = 0 }, 0, 1, VE },
+    { "variable_bitrate", "enables variable bitrate mode", OFFSET(variable_bitrate), AV_OPT_TYPE_BOOL, { .i64 = 0 }, 0, 1, VE },
     { NULL }
 };
 
@@ -134,7 +136,12 @@ FF_ENABLE_DEPRECATION_WARNINGS
     param.iPicHeight                 = avctx->height;
     param.iTargetBitrate             = avctx->bit_rate;
     param.iMaxBitrate                = FFMAX(avctx->rc_max_rate, avctx->bit_rate);
-    param.iRCMode                    = RC_QUALITY_MODE;
+    if (s->variable_bitrate)
+        param.iRCMode                = RC_OFF_MODE;
+    else
+        param.iRCMode                = RC_QUALITY_MODE;
+    param.iMinQp                     = 12;
+    param.iMaxQp                     = 42;
     param.iTemporalLayerNum          = 1;
     param.iSpatialLayerNum           = 1;
     param.bEnableDenoise             = 0;
